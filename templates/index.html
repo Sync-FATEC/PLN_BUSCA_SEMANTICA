@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Busca Semântica de Imagens</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #1e293b;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #0f172a;
+        }
+
+        form {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        input {
+            width: 420px;
+            max-width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            outline: none;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+
+        input:focus {
+            border-color: #2563eb;
+        }
+
+        button {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        h3 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #334155;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            transition: 0.25s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+        }
+
+        .card img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .card-content {
+            padding: 18px;
+        }
+
+        .card-content p {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .card-content strong {
+            color: #0f172a;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px;
+            }
+
+            form {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            button {
+                width: 100%;
+                max-width: 420px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Motor de Busca Semântica</h1>
+
+    <form method="POST">
+        <input 
+            type="text" 
+            name="pergunta"
+            placeholder="Ex: Quais imagens possuem vegetação?"
+            required
+        >
+
+        <button type="submit">
+            Buscar
+        </button>
+    </form>
+
+    {% if resposta %}
+        <h3>{{ resposta }}</h3>
+    {% endif %}
+
+    <div class="grid">
+
+        {% for img in imagens %}
+            <div class="card">
+
+                <img
+                    src="{{ url_for('static', filename=img[4].replace('static/', '')) }}"
+                    alt="Imagem"
+                >
+
+                <div class="card-content">
+                    <p>
+                        <strong>Categoria:</strong>
+                        {{ img[1] }}
+                    </p>
+
+                    <p>
+                        <strong>Data:</strong>
+                       {{ img[2].strftime('%d/%m/%Y') }}
+                    </p>
+
+                    <p>
+                        <strong>Origem:</strong>
+                        {{ img[3] }}
+                    </p>
+                </div>
+
+            </div>
+        {% endfor %}
+
+    </div>
+
+</body>
+
+</html>
