@@ -13,6 +13,9 @@ A aplicação permite que o usuário realize buscas textuais em um banco de dado
 - PostgreSQL
 - Scikit-learn
 - RapidFuzz
+- psycopg2
+- Unidecode
+- python-dotenv
 - HTML/CSS
 
 ## Funcionalidades
@@ -93,7 +96,7 @@ http://127.0.0.1:5000
 ## Categoria: Contagem de Imagens
 
 ### Tipo de consulta:
-Contagem de registros cadastrados
+Contagem de registros cadastrados. Retorna apenas o total de imagens, sem exibir galeria.
 
 - Quantas imagens estão catalogadas?
 - Há quantas imagens cadastradas?
@@ -103,6 +106,12 @@ Contagem de registros cadastrados
 - Mostrar total de imagens
 - Quantas imagens o sistema possui?
 - Exibir quantidade de imagens
+
+## Categoria: Listagem Geral
+
+### Tipo de consulta:
+Exibe todas as imagens cadastradas
+
 - Mostrar todas as imagens
 
 ## Categoria: Vegetação
@@ -110,15 +119,11 @@ Contagem de registros cadastrados
 ### Tipo de consulta:
 Filtro por categoria vegetação
 
-- Mostrar imagens de vegetação
 - Quais imagens possuem vegetação?
 - Listar imagens com vegetação
-- Buscar imagens de floresta
-- Buscar vegetação
-- Mostrar imagens de mata
-- Listar áreas agrícolas
 - Listar imagens de floresta
 - Exibir vegetação por satélite
+- Exibir vegetação por drone
 
 
 ## Categoria: Água
@@ -126,10 +131,7 @@ Filtro por categoria vegetação
 ### Tipo de consulta:
 Filtro por categoria água
 
-- Mostrar imagens de água
 - Quais imagens possuem água?
-- Exibir regiões com água
-- Buscar imagens de rios e lagos
 - Listar imagens de rios
 - Buscar imagens de lagos
 - Mostrar rios
@@ -142,7 +144,6 @@ Filtro por categoria água
 ### Tipo de consulta:
 Filtro por categoria solo exposto
 
-- Mostrar terra exposta
 - Mostrar imagens de solo exposto
 - Mostrar regiões secas
 - Buscar desmatamento
@@ -185,8 +186,6 @@ Filtro por data
 - Listar imagens do dia 02/05/2026
 - Listar imagens do dia 05/05/2026
 - Listar imagens do dia 11/05/2026
-
-
 
 ## Pipeline de PLN Utilizada
 

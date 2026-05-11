@@ -32,49 +32,49 @@ consultas_referencia = [
     {
         "texto": "quantas imagens estao catalogadas",
         "categoria": "contagem",
-        "sql": "SELECT * FROM metadata_table"
+        "sql": "SELECT COUNT(*) FROM metadata_table"
     },
 
     {
         "texto": "ha quantas imagens cadastradas",
         "categoria": "contagem",
-        "sql": "SELECT * FROM metadata_table"
+        "sql": "SELECT COUNT(*) FROM metadata_table"
     },
 
     {
         "texto": "quantas imagens existem no banco",
         "categoria": "contagem",
-        "sql": "SELECT * FROM metadata_table"
+        "sql": "SELECT COUNT(*) FROM metadata_table"
     },
 
     {
         "texto": "mostrar quantidade de imagens",
         "categoria": "contagem",
-        "sql": "SELECT * FROM metadata_table"
+        "sql": "SELECT COUNT(*) FROM metadata_table"
     },
 
     {
         "texto": "quantas imagens existem",
         "categoria": "contagem",
-        "sql": "SELECT * FROM metadata_table"
+        "sql": "SELECT COUNT(*) FROM metadata_table"
     },
 
     {
         "texto": "mostrar total de imagens",
         "categoria": "contagem",
-        "sql": "SELECT * FROM metadata_table"
+        "sql": "SELECT COUNT(*) FROM metadata_table"
     },
 
     {
         "texto": "quantas imagens o sistema possui",
         "categoria": "contagem",
-        "sql": "SELECT * FROM metadata_table"
+        "sql": "SELECT COUNT(*) FROM metadata_table"
     },
 
     {
         "texto": "exibir quantidade de imagens",
         "categoria": "contagem",
-        "sql": "SELECT * FROM metadata_table"
+        "sql": "SELECT COUNT(*) FROM metadata_table"
     },
 
     {
@@ -91,6 +91,48 @@ consultas_referencia = [
 
     {
         "texto": "listar imagens de agua",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'água'"
+    },
+
+    {
+        "texto": "listar imagens de rios",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'água'"
+    },
+
+    {
+        "texto": "buscar imagens de lagos",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'água'"
+    },
+
+    {
+        "texto": "mostrar rios",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'água'"
+    },
+
+    {
+        "texto": "buscar lagos",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'água'"
+    },
+
+    {
+        "texto": "exibir represas",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'água'"
+    },
+
+    {
+        "texto": "exibir regioes com agua",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'água'"
+    },
+
+    {
+        "texto": "quais imagens possuem agua",
         "categoria": "filtro_categoria",
         "sql": "SELECT * FROM metadata_table WHERE categoria = 'água'"
     },
@@ -133,6 +175,12 @@ consultas_referencia = [
 
     {
         "texto": "listar imagens de satelite",
+        "categoria": "filtro_origem",
+        "sql": "SELECT * FROM metadata_table WHERE origem = 'satélite'"
+    },
+
+    {
+        "texto": "mostrar imagens de satelite",
         "categoria": "filtro_origem",
         "sql": "SELECT * FROM metadata_table WHERE origem = 'satélite'"
     },
@@ -237,14 +285,47 @@ consultas_referencia = [
         "texto": "listar imagens do dia",
         "categoria": "filtro_data_dinamica",
         "sql": None
+    },
+
+    {
+        "texto": "exibir vegetacao por drone",
+        "categoria": "filtro_combinado",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'vegetação' AND origem = 'drone'"
+    },
+
+    {
+        "texto": "mostrar agua de satelite",
+        "categoria": "filtro_combinado",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'água' AND origem = 'satélite'"
+    },
+
+    {
+        "texto": "listar solo exposto por drone",
+        "categoria": "filtro_combinado",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'solo exposto' AND origem = 'drone'"
+    },
+
+    {
+        "texto": "mostrar solo exposto de satelite",
+        "categoria": "filtro_combinado",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'solo exposto' AND origem = 'satélite'"
+    },
+
+    {
+        "texto": "imagens de agua e drone",
+        "categoria": "filtro_combinado",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'água' AND origem = 'drone'"
+    },
+
+    {
+        "texto": "imagens de vegetacao e satelite",
+        "categoria": "filtro_combinado",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'vegetação' AND origem = 'satélite'"
     }
 ]
 
 def corrigir_erros(texto):
-    """
-    Corrige erros de digitação automaticamente.
-    Extrai palavras do contexto do projeto e sugere correções.
-    """
+
     # Extrai todas as palavras únicas dos textos de referência
     palavras_conhecidas = set()
     for consulta in consultas_referencia:
@@ -282,31 +363,51 @@ def extrair_data(texto):
     return None
 
 def identificar_consulta(entrada):
-    entrada = normalizar_texto(entrada)
-    entrada = corrigir_erros(entrada)
+    """
+    Identifica a consulta usando BOW e similaridade de cosseno.
+    Compara a entrada do usuário com todas as consultas de referência.
+    """
+    entrada_normalizada = normalizar_texto(entrada)
+    entrada_corrigida = corrigir_erros(entrada_normalizada)
 
+    # Normaliza todos os textos de referência
     textos = [normalizar_texto(c["texto"]) for c in consultas_referencia]
-    textos.append(entrada)
+    textos.append(entrada_corrigida)
 
+    # Cria representação BOW de todos os textos
     vectorizer = CountVectorizer()
-
     bow: Any = vectorizer.fit_transform(textos)
 
+    # Extrai BOW da entrada do usuário (última linha)
     entrada_bow = bow.getrow(bow.shape[0] - 1)
+    # BOWs das consultas de referência
     referencias_bow = bow[:-1]
 
+    # Calcula similaridade de cosseno
     similaridades = cosine_similarity(
         entrada_bow,
         referencias_bow
     ).flatten()
 
+    # Encontra a consulta mais similar
     indice = similaridades.argmax()
     maior_similaridade = similaridades[indice]
 
+    # Se a similaridade for muito baixa, retorna None
     if maior_similaridade < 0.25:
         return None
 
-    return consultas_referencia[indice]
+    consulta = consultas_referencia[indice]
+    
+    # Se for filtro de data dinâmica, extrai a data
+    if consulta["categoria"] == "filtro_data_dinamica":
+        data_extraida = extrair_data(entrada)
+        if data_extraida:
+            consulta["sql"] = f"SELECT * FROM metadata_table WHERE data_imagem = '{data_extraida}'"
+        else:
+            return None
+    
+    return consulta
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -326,30 +427,26 @@ def index():
             cursor = conn.cursor()
             
             sql = consulta["sql"]
-            
-            # Se for filtro de data dinâmica, extrair a data e construir SQL
-            if consulta["categoria"] == "filtro_data_dinamica":
-                data_extraida = extrair_data(pergunta)
-                if data_extraida:
-                    sql = f"SELECT * FROM metadata_table WHERE data_imagem = '{data_extraida}'"
-                else:
-                    resposta = "Não consegui identificar a data. Use o formato DD/MM/YYYY (ex: 05/05/2026)."
-                    conn.close()
-                    return render_template("index.html", resposta=resposta, imagens=imagens, pergunta_digitada=pergunta_digitada)
-            
             cursor.execute(sql)
             resultado = cursor.fetchall()
             conn.close()
 
-            imagens = resultado
-            quantidade = len(imagens)
-
-            if quantidade == 0:
-                resposta = "Nenhuma imagem encontrada."
-            elif quantidade == 1:
-                resposta = "Foi encontrada 1 imagem."
+            # Se for consulta de contagem, retorna apenas o resultado numérico
+            if consulta["categoria"] == "contagem":
+                total_imagens = resultado[0][0]
+                resposta = f"No total, há {total_imagens} imagens cadastradas."
+                imagens = []
             else:
-                resposta = f"Foram encontradas {quantidade} imagens."
+                # Para outras consultas, exibe as imagens
+                imagens = resultado
+                quantidade = len(imagens)
+
+                if quantidade == 0:
+                    resposta = "Nenhuma imagem encontrada."
+                elif quantidade == 1:
+                    resposta = "Foi encontrada 1 imagem."
+                else:
+                    resposta = f"Foram encontradas {quantidade} imagens."
 
     return render_template("index.html", resposta=resposta, imagens=imagens, pergunta_digitada=pergunta_digitada)
 
