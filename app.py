@@ -90,6 +90,12 @@ consultas_referencia = [
     },
 
     {
+        "texto": "quais imagens possuem vegetacao",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'vegetação'"
+    },
+
+    {
         "texto": "listar imagens de agua",
         "categoria": "filtro_categoria",
         "sql": "SELECT * FROM metadata_table WHERE categoria = 'água'"
@@ -138,7 +144,31 @@ consultas_referencia = [
     },
 
     {
+        "texto": "listar imagens de floresta",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'vegetação'"
+    },
+
+    {
+        "texto": "buscar imagens com vegetacao",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'vegetação'"
+    },
+
+    {
+        "texto": "mostrar regioes com vegetacao",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'vegetação'"
+    },
+
+    {
         "texto": "listar imagens de solo exposto",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'solo exposto'"
+    },
+
+    {
+        "texto": "quais imagens possuem solo exposto",
         "categoria": "filtro_categoria",
         "sql": "SELECT * FROM metadata_table WHERE categoria = 'solo exposto'"
     },
@@ -325,7 +355,6 @@ consultas_referencia = [
 ]
 
 def corrigir_erros(texto):
-
     # Extrai todas as palavras únicas dos textos de referência
     palavras_conhecidas = set()
     for consulta in consultas_referencia:
