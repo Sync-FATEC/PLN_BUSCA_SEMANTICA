@@ -74,7 +74,7 @@ CREATE DATABASE busca_semantica;
 
 Executar:
 
-- `schema.sql`
+- `database.sql`
 
 ## Executar Aplicação
 
@@ -97,19 +97,13 @@ Contagem de registros cadastrados
 
 - Quantas imagens estão catalogadas?
 - Há quantas imagens cadastradas?
-- Total de imagens registradas?
 - Quantas imagens existem no banco?
 - Mostrar quantidade de imagens
-- Quantidade total de imagens
-- Quantas imagens foram armazenadas?
-- Número de imagens cadastradas
 - Quantas imagens existem?
 - Mostrar total de imagens
-- Quantos registros existem?
-- Quantidade de registros
-- Quantidade total cadastrada
 - Quantas imagens o sistema possui?
 - Exibir quantidade de imagens
+- Mostrar todas as imagens
 
 ## Categoria: Vegetação
 
@@ -119,18 +113,13 @@ Filtro por categoria vegetação
 - Mostrar imagens de vegetação
 - Quais imagens possuem vegetação?
 - Listar imagens com vegetação
-- Exibir áreas verdes
 - Buscar imagens de floresta
-- Mostrar florestas
 - Buscar vegetação
 - Mostrar imagens de mata
-- Exibir plantações
 - Listar áreas agrícolas
-- Mostrar cobertura vegetal
-- Buscar regiões verdes
-- Mostrar imagens vegetais
-- Exibir vegetação por satélite
 - Listar imagens de floresta
+- Exibir vegetação por satélite
+
 
 ## Categoria: Água
 
@@ -139,40 +128,29 @@ Filtro por categoria água
 
 - Mostrar imagens de água
 - Quais imagens possuem água?
+- Exibir regiões com água
+- Buscar imagens de rios e lagos
 - Listar imagens de rios
-- Exibir imagens aquáticas
 - Buscar imagens de lagos
 - Mostrar rios
 - Buscar lagos
 - Exibir represas
-- Mostrar imagens marítimas
-- Buscar áreas alagadas
-- Mostrar reservatórios
-- Exibir regiões com água
-- Listar imagens aquáticas
-- Mostrar oceano
-- Buscar imagens de rios e lagos
+- Exibir água por drone
 
 ## Categoria: Solo Exposto
 
 ### Tipo de consulta:
 Filtro por categoria solo exposto
 
-- Mostrar imagens de solo exposto
-- Quais imagens possuem terra exposta?
-- Listar áreas desmatadas
-- Exibir regiões sem vegetação
-- Buscar imagens de solo seco
-- Mostrar áreas áridas
-- Buscar desmatamento
-- Exibir solo descoberto
-- Mostrar regiões secas
-- Buscar áreas degradadas
-- Exibir mineração
 - Mostrar terra exposta
+- Mostrar imagens de solo exposto
+- Mostrar regiões secas
+- Buscar desmatamento
 - Buscar solo sem vegetação
-- Exibir áreas marrons
+- Listar áreas desmatadas
 - Mostrar imagens de desmatamento
+- Exibir terra exposta por drone
+
 
 ## Categoria: Origem Satélite
 
@@ -182,18 +160,8 @@ Filtro por origem satélite
 - Mostrar imagens de satélite
 - Listar imagens capturadas por satélite
 - Quais imagens vieram de satélite?
-- Buscar imagens orbitais
-- Exibir imagens espaciais
-- Mostrar registros de satélite
-- Buscar imagens via satélite
-- Exibir capturas orbitais
-- Mostrar imagens espaciais
-- Buscar imagens de origem satélite
-- Mostrar fotos de satélite
-- Exibir imagens capturadas do espaço
-- Buscar registros espaciais
-- Mostrar imagens orbitais
 - Exibir imagens vindas de satélite
+- Exibir imagens capturadas do espaço
 
 ## Categoria: Origem Drone
 
@@ -202,19 +170,9 @@ Filtro por origem drone
 
 - Mostrar imagens de drone
 - Listar imagens capturadas por drone
+- Mostrar imagens obtidas por drone
 - Quais imagens vieram de drone?
 - Buscar imagens aéreas
-- Exibir imagens de drone
-- Mostrar capturas aéreas
-- Buscar registros de drone
-- Exibir imagens aéreas
-- Mostrar fotos de drone
-- Buscar imagens capturadas do ar
-- Exibir registros aéreos
-- Mostrar imagens obtidas por drone
-- Buscar imagens voadoras
-- Exibir imagens capturadas por voo
-- Mostrar imagens de origem drone
 
 ## Categoria: Data
 
@@ -222,20 +180,13 @@ Filtro por origem drone
 Filtro por data
 
 - Mostrar imagens de hoje
-- Listar imagens do dia 05/05/2026
 - Quais imagens foram registradas hoje?
-- Buscar imagens recentes
-- Exibir imagens por data
-- Mostrar imagens do dia
-- Buscar registros recentes
 - Exibir imagens cadastradas hoje
-- Mostrar imagens antigas
-- Buscar imagens por período
-- Exibir registros por data
-- Mostrar imagens do mês
-- Buscar imagens da semana
-- Exibir imagens recentes
-- Mostrar imagens cadastradas recentemente
+- Listar imagens do dia 02/05/2026
+- Listar imagens do dia 05/05/2026
+- Listar imagens do dia 11/05/2026
+
+
 
 ## Pipeline de PLN Utilizada
 

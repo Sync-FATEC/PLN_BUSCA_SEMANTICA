@@ -2,19 +2,23 @@ from flask import Flask, render_template, request
 import psycopg2
 import re
 import unidecode
+import os
+from dotenv import load_dotenv
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from rapidfuzz import process
 from typing import Any
 
+load_dotenv()
+
 app = Flask(__name__)
 
 def conectar():
     return psycopg2.connect(
-        host="localhost",
-        database="busca_semantica",
-        user="postgres",
-        password="admin"
+        host=os.getenv("DB_HOST"),
+        database=os.getenv("DB_DATABASE"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD")
     )
 
 def normalizar_texto(texto):
@@ -28,7 +32,55 @@ consultas_referencia = [
     {
         "texto": "quantas imagens estao catalogadas",
         "categoria": "contagem",
-        "sql": "SELECT COUNT(*) FROM metadata_table"
+        "sql": "SELECT * FROM metadata_table"
+    },
+
+    {
+        "texto": "ha quantas imagens cadastradas",
+        "categoria": "contagem",
+        "sql": "SELECT * FROM metadata_table"
+    },
+
+    {
+        "texto": "quantas imagens existem no banco",
+        "categoria": "contagem",
+        "sql": "SELECT * FROM metadata_table"
+    },
+
+    {
+        "texto": "mostrar quantidade de imagens",
+        "categoria": "contagem",
+        "sql": "SELECT * FROM metadata_table"
+    },
+
+    {
+        "texto": "quantas imagens existem",
+        "categoria": "contagem",
+        "sql": "SELECT * FROM metadata_table"
+    },
+
+    {
+        "texto": "mostrar total de imagens",
+        "categoria": "contagem",
+        "sql": "SELECT * FROM metadata_table"
+    },
+
+    {
+        "texto": "quantas imagens o sistema possui",
+        "categoria": "contagem",
+        "sql": "SELECT * FROM metadata_table"
+    },
+
+    {
+        "texto": "exibir quantidade de imagens",
+        "categoria": "contagem",
+        "sql": "SELECT * FROM metadata_table"
+    },
+
+    {
+        "texto": "mostrar todas as imagens",
+        "categoria": "listagem_geral",
+        "sql": "SELECT * FROM metadata_table"
     },
 
     {
@@ -50,7 +102,61 @@ consultas_referencia = [
     },
 
     {
+        "texto": "mostrar regioes secas",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'solo exposto'"
+    },
+
+    {
+        "texto": "buscar desmatamento",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'solo exposto'"
+    },
+
+    {
+        "texto": "buscar solo sem vegetacao",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'solo exposto'"
+    },
+
+    {
+        "texto": "listar areas desmatadas",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'solo exposto'"
+    },
+
+    {
+        "texto": "mostrar imagens de desmatamento",
+        "categoria": "filtro_categoria",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'solo exposto'"
+    },
+
+    {
         "texto": "listar imagens de satelite",
+        "categoria": "filtro_origem",
+        "sql": "SELECT * FROM metadata_table WHERE origem = 'satélite'"
+    },
+
+    {
+        "texto": "listar imagens capturadas por satelite",
+        "categoria": "filtro_origem",
+        "sql": "SELECT * FROM metadata_table WHERE origem = 'satélite'"
+    },
+
+    {
+        "texto": "quais imagens vieram de satelite",
+        "categoria": "filtro_origem",
+        "sql": "SELECT * FROM metadata_table WHERE origem = 'satélite'"
+    },
+
+    {
+        "texto": "exibir imagens vindas de satelite",
+        "categoria": "filtro_origem",
+        "sql": "SELECT * FROM metadata_table WHERE origem = 'satélite'"
+    },
+
+    {
+        "texto": "exibir imagens capturadas do espaco",
         "categoria": "filtro_origem",
         "sql": "SELECT * FROM metadata_table WHERE origem = 'satélite'"
     },
@@ -62,35 +168,118 @@ consultas_referencia = [
     },
 
     {
+        "texto": "listar imagens capturadas por drone",
+        "categoria": "filtro_origem",
+        "sql": "SELECT * FROM metadata_table WHERE origem = 'drone'"
+    },
+
+    {
+        "texto": "mostrar imagens de drone",
+        "categoria": "filtro_origem",
+        "sql": "SELECT * FROM metadata_table WHERE origem = 'drone'"
+    },
+
+    {
+        "texto": "quais imagens vieram de drone",
+        "categoria": "filtro_origem",
+        "sql": "SELECT * FROM metadata_table WHERE origem = 'drone'"
+    },
+
+    {
+        "texto": "buscar imagens aereas",
+        "categoria": "filtro_origem",
+        "sql": "SELECT * FROM metadata_table WHERE origem = 'drone'"
+    },
+
+    {
+        "texto": "mostrar imagens obtidas por drone",
+        "categoria": "filtro_origem",
+        "sql": "SELECT * FROM metadata_table WHERE origem = 'drone'"
+    },
+
+    {
+        "texto": "exibir vegetacao por satelite",
+        "categoria": "filtro_combinado",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'vegetação' AND origem = 'satélite'"
+    },
+
+    {
+        "texto": "exibir agua por drone",
+        "categoria": "filtro_combinado",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'água' AND origem = 'drone'"
+    },
+
+    {
+        "texto": "exibir terra exposta por drone",
+        "categoria": "filtro_combinado",
+        "sql": "SELECT * FROM metadata_table WHERE categoria = 'solo exposto' AND origem = 'drone'"
+    },
+
+    {
         "texto": "listar imagens de hoje",
         "categoria": "filtro_data",
         "sql": "SELECT * FROM metadata_table WHERE data_imagem = CURRENT_DATE"
     },
 
     {
-        "texto": "listar todas as imagens",
-        "categoria": "listagem_geral",
-        "sql": "SELECT * FROM metadata_table"
+        "texto": "quais imagens foram registradas hoje",
+        "categoria": "filtro_data",
+        "sql": "SELECT * FROM metadata_table WHERE data_imagem = CURRENT_DATE"
+    },
+
+    {
+        "texto": "exibir imagens cadastradas hoje",
+        "categoria": "filtro_data",
+        "sql": "SELECT * FROM metadata_table WHERE data_imagem = CURRENT_DATE"
+    },
+
+    {
+        "texto": "listar imagens do dia",
+        "categoria": "filtro_data_dinamica",
+        "sql": None
     }
 ]
 
 def corrigir_erros(texto):
-    palavras_validas = [
-        "quantas", "imagens", "catalogadas", "listar", "vegetacao",
-        "agua", "solo", "exposto", "satelite", "drone", "todas"
-    ]
-
+    """
+    Corrige erros de digitação automaticamente.
+    Extrai palavras do contexto do projeto e sugere correções.
+    """
+    # Extrai todas as palavras únicas dos textos de referência
+    palavras_conhecidas = set()
+    for consulta in consultas_referencia:
+        palavras = consulta["texto"].split()
+        palavras_conhecidas.update(palavras)
+    
+    palavras_conhecidas = list(palavras_conhecidas)
+    
     tokens = texto.split()
     corrigidos = []
 
     for token in tokens:
-        melhor = process.extractOne(token, palavras_validas)
-        if melhor and melhor[1] >= 80:
-            corrigidos.append(melhor[0])
-        else:
+        # Se a palavra já está correta, mantém
+        if token in palavras_conhecidas:
             corrigidos.append(token)
+        else:
+            # Tenta encontrar a palavra mais similar automaticamente
+            melhor = process.extractOne(token, palavras_conhecidas)
+            if melhor and melhor[1] >= 75:  # 75% de similaridade
+                corrigidos.append(melhor[0])
+            else:
+                # Se não encontrar com alta similaridade, mantém a palavra original
+                corrigidos.append(token)
 
     return " ".join(corrigidos)
+
+def extrair_data(texto):
+    """Extrai data no formato DD/MM/YYYY da pergunta"""
+    import re
+    padrao = r'(\d{1,2})/(\d{1,2})/(\d{4})'
+    match = re.search(padrao, texto)
+    if match:
+        dia, mes, ano = match.groups()
+        return f"{ano}-{mes}-{dia}"
+    return None
 
 def identificar_consulta(entrada):
     entrada = normalizar_texto(entrada)
@@ -123,9 +312,11 @@ def identificar_consulta(entrada):
 def index():
     resposta = None
     imagens = []
+    pergunta_digitada = None
 
     if request.method == "POST":
         pergunta = request.form["pergunta"]
+        pergunta_digitada = pergunta
         consulta = identificar_consulta(pergunta)
 
         if consulta is None:
@@ -133,24 +324,34 @@ def index():
         else:
             conn = conectar()
             cursor = conn.cursor()
-            cursor.execute(consulta["sql"])
+            
+            sql = consulta["sql"]
+            
+            # Se for filtro de data dinâmica, extrair a data e construir SQL
+            if consulta["categoria"] == "filtro_data_dinamica":
+                data_extraida = extrair_data(pergunta)
+                if data_extraida:
+                    sql = f"SELECT * FROM metadata_table WHERE data_imagem = '{data_extraida}'"
+                else:
+                    resposta = "Não consegui identificar a data. Use o formato DD/MM/YYYY (ex: 05/05/2026)."
+                    conn.close()
+                    return render_template("index.html", resposta=resposta, imagens=imagens, pergunta_digitada=pergunta_digitada)
+            
+            cursor.execute(sql)
             resultado = cursor.fetchall()
             conn.close()
 
-            if consulta["categoria"] == "contagem":
-                resposta = f"No total, há {resultado[0][0]} imagens cadastradas."
+            imagens = resultado
+            quantidade = len(imagens)
+
+            if quantidade == 0:
+                resposta = "Nenhuma imagem encontrada."
+            elif quantidade == 1:
+                resposta = "Foi encontrada 1 imagem."
             else:
-                imagens = resultado
-                quantidade = len(imagens)
+                resposta = f"Foram encontradas {quantidade} imagens."
 
-                if quantidade == 0:
-                    resposta = "Nenhuma imagem encontrada."
-                elif quantidade == 1:
-                    resposta = "Foi encontrada 1 imagem."
-                else:
-                    resposta = f"Foram encontradas {quantidade} imagens."
-
-    return render_template("index.html", resposta=resposta, imagens=imagens)
+    return render_template("index.html", resposta=resposta, imagens=imagens, pergunta_digitada=pergunta_digitada)
 
 if __name__ == "__main__":
     app.run(debug=True)

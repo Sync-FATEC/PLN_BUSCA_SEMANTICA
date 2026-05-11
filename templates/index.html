@@ -145,6 +145,11 @@
 
     {% if resposta %}
         <h3>{{ resposta }}</h3>
+        {% if pergunta_digitada %}
+            <p style="text-align: center; color: #64748b; font-style: italic; margin-bottom: 30px;">
+                Pergunta: {{ pergunta_digitada }}
+            </p>
+        {% endif %}
     {% endif %}
 
     <div class="grid">
