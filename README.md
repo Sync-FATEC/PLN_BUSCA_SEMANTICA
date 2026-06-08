@@ -1,201 +1,332 @@
-# Motor de Busca Semântica com BOW
+# Busca Semântica em Banco de Imagens — word2vec + Transformers (LLM)
 
-## Descrição
+## 1. Descrição
 
-Este projeto consiste no desenvolvimento de um motor de busca semântica utilizando técnicas de Processamento de Linguagem Natural (PLN), representação Bag of Words (BOW) e similaridade de cosseno.
+Sistema que permite consultar, em **linguagem natural** (português), um banco
+de imagens de sensoriamento remoto. O usuário escreve uma pergunta qualquer
+(ex.: *"fotos de drone no mês 6"*) e o sistema **interpreta** a frase e gera a
+consulta SQL correspondente, exibindo as imagens encontradas.
 
-A aplicação permite que o usuário realize buscas textuais em um banco de dados de imagens de sensoriamento remoto, retornando resultados com base na similaridade semântica entre a consulta do usuário e consultas de referência previamente cadastradas.
+Em vez de casar a pergunta com uma lista de consultas prontas, o sistema
+**extrai entidades** (categoria, origem, data, intenção) e **monta o SQL
+dinamicamente**. Por isso aceita **qualquer combinação** desses elementos.
 
-## Tecnologias Utilizadas
+As duas tecnologias do enunciado são usadas **juntas** para entender o texto:
 
-- Python
-- Flask
-- PostgreSQL
-- Scikit-learn
-- RapidFuzz
-- psycopg2
-- Unidecode
-- python-dotenv
-- HTML/CSS
+- **word2vec** — vetores de palavras pré-treinados em português (spaCy)
+- **Transformers (LLM)** — modelo de sentenças (sentence-transformers)
 
-## Funcionalidades
+---
 
-- Busca textual semântica
-- Pré-processamento de texto
-- Correção de erros de digitação
-- Representação Bag of Words (BOW)
-- Similaridade de cosseno
-- Integração com PostgreSQL
-- Exibição de imagens na interface
+## 2. Tecnologias
 
-## Metadados das Imagens
+| Tecnologia | Papel no projeto |
+|------------|------------------|
+| Python + Flask | Servidor web e interface |
+| PostgreSQL (psycopg2) | Armazena os metadados das imagens |
+| **spaCy** (`pt_core_news_md`) | Fornece os vetores **word2vec** |
+| **sentence-transformers** (`paraphrase-multilingual-MiniLM-L12-v2`) | Fornece os embeddings do **transformer (LLM)** |
+| scikit-learn | Calcula a **similaridade de cosseno** |
+| RapidFuzz + Unidecode | **Correção ortográfica** tolerante a acento |
+| HTML/CSS | Interface visual (galeria de imagens) |
 
-Cada imagem cadastrada possui:
+---
 
-- Categoria da imagem
-  - Vegetação
-  - Água
-  - Solo exposto
+## 3. Estrutura do projeto
 
-- Data da imagem
-
-- Origem da imagem
-  - Satélite
-  - Drone
-
-- Caminho do arquivo da imagem
-
-## Como Executar
-
-### 1. Criar ambiente virtual
-
-```bash
-python3 -m venv venv
+```
+PLN_BUSCA_SEMANTICA/
+├── app.py                      # Interface web (Flask) — apenas as rotas
+├── requirements.txt
+├── database.sql                # Criação da tabela + dados de exemplo
+├── templates/index.html        # Página + painel do que foi entendido
+├── static/images/              # Imagens (vegetação, água, solo exposto)
+└── busca/                      # Toda a lógica do sistema
+    ├── __init__.py             # Ativa o modo offline dos modelos (se há cache)
+    ├── config.py               # Configurações (banco, modelos, limiares)
+    ├── vocabulario.py          # Sinônimos de cada categoria/origem
+    ├── modelos.py              # Carrega word2vec + transformer e mede similaridade
+    ├── preprocessamento.py     # Normalização + correção ortográfica
+    ├── entidades.py            # Detecta categoria, origem e intenção
+    ├── datas.py                # Detecta a expressão de data → condição SQL
+    ├── sql_builder.py          # Monta o SQL a partir das entidades
+    ├── busca_semantica.py      # Orquestra tudo (identificar_consulta)
+    └── database.py             # Conexão e execução de queries
 ```
 
-### 2. Ativar ambiente virtual
+A separação segue a ideia de **uma responsabilidade por arquivo**, o que
+facilita explicar cada etapa isoladamente.
 
-```bash
-source venv/bin/activate
+---
+
+## 4. A pipeline passo a passo (no código)
+
+Visão geral do caminho de uma pergunta:
+
+```
+pergunta do usuário
+  1. pré-processamento        (preprocessamento.py)
+  2. vetorização das palavras (modelos.py)
+  3. detecção de entidades    (entidades.py + datas.py)
+  4. verificação de domínio    (entidades.py)
+  5. montagem do SQL           (sql_builder.py)
+  6. execução e exibição       (database.py + app.py)
 ```
 
-### 3. Instalar dependências
+Tudo é coordenado pela função `identificar_consulta()` em
+`busca/busca_semantica.py`.
+
+### 4.1. Pré-processamento — `preprocessamento.py`
+
+Duas etapas, aplicadas em sequência por `preprocessar()`:
+
+**a) Normalização** — `normalizar()`
+- passa tudo para minúsculas;
+- remove pontuação com `re.sub(r"[^\w\s]", " ", texto)`;
+- **mantém os acentos** de propósito (ver seção 5.1).
+
+**b) Correção ortográfica** — `corrigir_ortografia()`
+- usa o **RapidFuzz** para trocar cada palavra desconhecida pela mais
+  parecida do `VOCABULARIO`;
+- a comparação é feita **sem acento** (`processor=unidecode`) e por
+  similaridade de caracteres (`scorer=fuzz.ratio`), mas a palavra devolvida
+  é a forma **correta e acentuada**. Ex.: `"vegetasao"` → `"vegetação"`,
+  `"agua"` → `"água"`;
+- palavras com menos de 4 letras (de, do, no, e, as...) **não** são
+  corrigidas, para evitar trocas absurdas como `"e"` → `"aérea"`;
+- só aceita a correção se a similaridade for ≥ `LIMIAR_CORRECAO` (80).
+
+Resultado: um texto limpo, acentuado e sem erros, pronto para virar vetor.
+
+### 4.2. Vetorização — `modelos.py`
+
+Aqui as **duas tecnologias** entram em ação. A função `embeddings(textos)`
+recebe uma lista de palavras e devolve dois conjuntos de vetores:
+
+- **word2vec** (`_nlp(t).vector`): cada palavra vira um vetor de números
+  pré-treinado (spaCy). Palavras com sentido parecido têm vetores próximos.
+- **transformer** (`_transformer.encode(...)`): o modelo de sentenças (LLM)
+  gera outro vetor, que captura o significado considerando o contexto.
+
+Os modelos são carregados **uma única vez**, quando o módulo é importado.
+
+### 4.3. Similaridade de cosseno + fusão — `modelos.py`
+
+A função `max_similaridade(consulta, referencia)`:
+
+1. calcula a **similaridade de cosseno** entre os vetores da pergunta e os
+   vetores de referência, separadamente para word2vec e para o transformer;
+2. **combina** os dois numa média ponderada:
+
+   ```
+   similaridade = PESO_WORD2VEC * word2vec + (1 - PESO_WORD2VEC) * transformer
+   ```
+
+   (com `PESO_WORD2VEC = 0.5`, peso igual para os dois);
+3. devolve o **maior** valor encontrado — ou seja, "a palavra mais parecida
+   da pergunta com o sinônimo mais parecido da categoria".
+
+> A comparação é **palavra a palavra** (cada token da pergunta contra cada
+> sinônimo). Isso é mais robusto do que comparar a frase inteira, porque o
+> tamanho da frase não dilui o sinal do termo importante.
+
+### 4.4. Detecção de entidades — `entidades.py`
+
+Os sinônimos de cada categoria/origem ficam em `vocabulario.py` e têm seus
+embeddings **pré-calculados** no início (`_CATEGORIAS_EMB`, `_ORIGENS_EMB`).
+
+- **`detectar_categoria()`** e **`detectar_origem()`**: para cada valor
+  possível (vegetação, água, solo exposto / satélite, drone), calculam a
+  similaridade combinada com as palavras da pergunta e escolhem o melhor.
+  Se ficar acima de `LIMIAR_ENTIDADE` (0.60), a entidade foi detectada;
+  senão, retorna `None` (aquele filtro não se aplica).
+- **`detectar_intencao()`**: olha se a pergunta tem palavras como "quantas",
+  "total", "quantidade" (`PALAVRAS_CONTAGEM`). Se sim → `"contagem"`;
+  senão → `"listagem"`.
+- **`eh_sobre_imagens()`**: mede se a pergunta tem a ver com o domínio
+  (palavras como "imagens", "fotos"...). Serve de "guarda" contra perguntas
+  fora do assunto (seção 4.6).
+
+### 4.5. Detecção de data — `datas.py`
+
+A função `detectar_data()` recebe o **texto original** (não o corrigido) e
+tenta, nesta ordem:
+
+1. **Relativas ao agora** (`_relativas`): "hoje", "ontem", "esse mês",
+   "mês passado", "esse ano", "ano passado", "essa/semana passada".
+2. **Data completa** (`_data_completa`): "05/05/2026", "05/05",
+   "7 de maio de 2026", "7 de maio" (ano opcional).
+3. **Componentes soltos** (`_componentes`): combina o que achar — "dia 10"
+   (só o dia), "mês 6" ou "maio" (só o mês), "2026" (só o ano).
+
+O retorno é a **condição SQL** sobre a coluna `data_imagem`. As condições
+usam funções do PostgreSQL (`CURRENT_DATE`, `make_date`, `EXTRACT`,
+`date_trunc`), então o "agora" é sempre o dia em que a consulta roda — sem
+datas fixas no código. Exemplos:
+
+| Pergunta | Condição gerada |
+|----------|-----------------|
+| "imagens de hoje" | `data_imagem = CURRENT_DATE` |
+| "esse ano" | `EXTRACT(YEAR FROM data_imagem) = EXTRACT(YEAR FROM CURRENT_DATE)` |
+| "mês 6" | `EXTRACT(MONTH FROM data_imagem) = 6` |
+| "dia 10" | `EXTRACT(DAY FROM data_imagem) = 10` |
+| "7 de maio" | `data_imagem = make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, 5, 7)` |
+| "em 2026" | `EXTRACT(YEAR FROM data_imagem) = 2026` |
+
+### 4.6. Verificação de domínio (on-topic) — `busca_semantica.py`
+
+Antes de montar o SQL, o sistema decide se a pergunta é mesmo sobre imagens:
+
+```python
+on_topic = tem_filtro_forte or intencao == "contagem" or eh_sobre_imagens(...)
+```
+
+- se detectou categoria ou origem → claramente é do domínio;
+- se é uma contagem ("quantas...") → ok;
+- senão, exige que a pergunta se pareça com o vocabulário do domínio.
+
+Se nada disso valer, retorna `None` e a interface responde *"Não entendi sua
+busca"*. É isso que faz *"qual a cotação do dólar hoje"* ser rejeitada,
+mesmo contendo "hoje".
+
+### 4.7. Montagem dinâmica do SQL — `sql_builder.py`
+
+`montar_sql()` junta **apenas os filtros detectados** com `AND`:
+
+- `categoria = '...'` se houver categoria;
+- `origem = '...'` se houver origem;
+- a condição de data, se houver;
+- `SELECT COUNT(*)` se a intenção for contagem, senão `SELECT *`.
+
+Exemplo: *"fotos de drone no mês 6"* →
+```sql
+SELECT * FROM metadata_table
+WHERE origem = 'drone' AND (EXTRACT(MONTH FROM data_imagem) = 6)
+```
+
+### 4.8. Execução e exibição — `database.py` + `app.py`
+
+- `database.executar_consulta(sql)` abre a conexão, roda a query e devolve as
+  linhas (sempre fechando a conexão no final).
+- `app.py` decide a resposta: se for **contagem**, mostra só o número; senão,
+  monta a **galeria** de imagens. O painel azul exibe o que o sistema
+  entendeu (categoria, origem, data, ação).
+
+---
+
+## 5. Detalhes importantes (decisões de projeto)
+
+### 5.1. Por que manter os acentos?
+
+Os vetores word2vec do spaCy são indexados nas palavras **acentuadas**
+("água", "vegetação"). Se removêssemos o acento (com `unidecode`), essas
+palavras virariam "desconhecidas" e o word2vec devolveria um vetor nulo —
+ou seja, **o word2vec deixaria de funcionar** e só o transformer contribuiria.
+
+Por isso o pré-processamento mantém os acentos, e a correção ortográfica é
+quem **restaura** o acento quando o usuário digita sem (comparando sem acento,
+mas devolvendo a forma correta).
+
+### 5.2. Limiares calibrados com medições
+
+Os limiares não foram chutados: medimos os scores reais de várias perguntas.
+Termos corretos batem em ~0.87–1.0; falsos positivos ficam em ≤0.55. O corte
+em **0.60** separa os dois com folga.
+
+### 5.3. Embeddings pré-calculados
+
+Os vetores dos sinônimos e do vocabulário de domínio são calculados **uma
+vez** no início (em `entidades.py`). A cada pergunta, só os vetores da
+pergunta são calculados — deixando a busca rápida.
+
+### 5.4. Funciona offline
+
+`busca/__init__.py` ativa o modo offline do HuggingFace **se o modelo já
+estiver em cache**. Assim, depois do primeiro download, o sistema roda sem
+internet (importante para o dia da apresentação). Numa máquina nova, mantém
+online para baixar o modelo na primeira vez.
+
+### 5.5. Observação de segurança
+
+Como é um trabalho acadêmico com vocabulário controlado, o SQL é montado por
+interpolação de strings. Em produção, o ideal seria usar **queries
+parametrizadas** para evitar injeção de SQL.
+
+---
+
+## 6. Como executar
+
+### 6.1. Ambiente virtual
+
+```bash
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # Linux/Mac
+```
+
+### 6.2. Dependências
 
 ```bash
 pip install -r requirements.txt
+python -m spacy download pt_core_news_md
 ```
 
-## Configuração do Banco de Dados
+> Na **primeira** execução, o sentence-transformers baixa o modelo (precisa de
+> internet). Depois funciona **offline**.
 
-### Criar banco
+### 6.3. Banco de dados
+
+Crie o arquivo `.env` na raiz:
+
+```env
+DB_HOST=localhost
+DB_DATABASE=busca_semantica
+DB_USER=postgres
+DB_PASSWORD=sua_senha
+```
+
+Crie o banco e carregue os dados:
 
 ```sql
 CREATE DATABASE busca_semantica;
 ```
 
-### Executar scripts SQL
+Depois execute o conteúdo de `database.sql`.
 
-Executar:
-
-- `database.sql`
-
-## Executar Aplicação
+### 6.4. Rodar
 
 ```bash
 python app.py
 ```
 
-A aplicação estará disponível em:
+Acesse: http://127.0.0.1:5000
 
-```txt
-http://127.0.0.1:5000
-```
+---
 
-## Exemplos de Perguntas
+## 7. Exemplos de perguntas
 
-## Categoria: Contagem de Imagens
+**Categoria:** "quais imagens possuem vegetação", "mostrar lagos e rios",
+"buscar áreas de desmatamento", "vegetasao por satelite" (com erro)
 
-### Tipo de consulta:
-Contagem de registros cadastrados. Retorna apenas o total de imagens, sem exibir galeria.
+**Origem:** "imagens de drone", "fotos vindas de satélite"
 
-- Quantas imagens estão catalogadas?
-- Há quantas imagens cadastradas?
-- Quantas imagens existem no banco?
-- Mostrar quantidade de imagens
-- Quantas imagens existem?
-- Mostrar total de imagens
-- Quantas imagens o sistema possui?
-- Exibir quantidade de imagens
+**Data:** "imagens de hoje", "fotos do mês passado", "imagens do dia 10",
+"imagens do mês 5", "7 de maio", "05/05/2026", "em 2026", "desse ano"
 
-## Categoria: Listagem Geral
+**Combinações:** "fotos de drone esse ano", "água por satélite no mês 5",
+"vegetação por drone no dia 2 de maio", "solo exposto do ano passado"
 
-### Tipo de consulta:
-Exibe todas as imagens cadastradas
+**Contagem:** "quantas imagens existem", "quantas fotos de satélite"
 
-- Mostrar todas as imagens
+> **Atenção aos dados:** as imagens de exemplo são de **maio/2026**. Logo,
+> "imagens de hoje"/"esse mês" funcionam, mas devolvem vazio (não há imagem do
+> mês atual). Para demonstrar data, prefira "esse ano", "mês 5" ou "7 de maio".
 
-## Categoria: Vegetação
+---
 
-### Tipo de consulta:
-Filtro por categoria vegetação
+## 8. Limitações conhecidas
 
-- Quais imagens possuem vegetação?
-- Listar imagens com vegetação
-- Listar imagens de floresta
-- Exibir vegetação por satélite
-- Exibir vegetação por drone
-
-
-## Categoria: Água
-
-### Tipo de consulta:
-Filtro por categoria água
-
-- Quais imagens possuem água?
-- Listar imagens de rios
-- Buscar imagens de lagos
-- Mostrar rios
-- Buscar lagos
-- Exibir represas
-- Exibir água por drone
-
-## Categoria: Solo Exposto
-
-### Tipo de consulta:
-Filtro por categoria solo exposto
-
-- Mostrar imagens de solo exposto
-- Mostrar regiões secas
-- Buscar desmatamento
-- Buscar solo sem vegetação
-- Listar áreas desmatadas
-- Mostrar imagens de desmatamento
-- Exibir terra exposta por drone
-
-
-## Categoria: Origem Satélite
-
-### Tipo de consulta:
-Filtro por origem satélite
-
-- Mostrar imagens de satélite
-- Listar imagens capturadas por satélite
-- Quais imagens vieram de satélite?
-- Exibir imagens vindas de satélite
-- Exibir imagens capturadas do espaço
-
-## Categoria: Origem Drone
-
-### Tipo de consulta:
-Filtro por origem drone
-
-- Mostrar imagens de drone
-- Listar imagens capturadas por drone
-- Mostrar imagens obtidas por drone
-- Quais imagens vieram de drone?
-- Buscar imagens aéreas
-
-## Categoria: Data
-
-### Tipo de consulta:
-Filtro por data
-
-- Mostrar imagens de hoje
-- Quais imagens foram registradas hoje?
-- Exibir imagens cadastradas hoje
-- Listar imagens do dia 02/05/2026
-- Listar imagens do dia 05/05/2026
-- Listar imagens do dia 11/05/2026
-
-## Pipeline de PLN Utilizada
-
-O sistema utiliza:
-
-1. Normalização de texto
-2. Remoção de caracteres especiais
-3. Conversão para minúsculas
-4. Correção de erros ortográficos
-5. Tokenização
-6. Representação Bag of Words
-7. Similaridade de cosseno
-
+- O reconhecimento de sinônimos depende do `vocabulario.py`; termos muito
+  diferentes podem não ser detectados (basta adicioná-los lá).
+- O SQL usa interpolação de strings (ver 5.5).
+- Datas por extenso assumem o ano atual quando o ano não é informado.
