@@ -40,6 +40,11 @@ PALAVRAS_DOMINIO = [
     "capturadas", "obtidas", "possuem", "existem", "banco", "catalogadas",
 ]
 
+# Palavras que indicam pergunta SOBRE os metadados (e não sobre as imagens)
+# ex.: "quais são as categorias disponíveis?"
+PALAVRAS_META_CATEGORIA = ["categorias", "categoria", "tipos", "tipo", "classes"]
+PALAVRAS_META_ORIGEM = ["origens", "origem", "fontes"]
+
 # Palavras ligadas a datas (para a correção ortográfica não as estragar)
 PALAVRAS_DATA = [
     "hoje", "ontem", "dia", "semana", "mês", "ano", "esse", "este", "essa",
@@ -57,6 +62,8 @@ def _coletar_vocabulario():
             palavras.update(frase.split())
     palavras.update(PALAVRAS_CONTAGEM)
     palavras.update(PALAVRAS_DOMINIO)
+    palavras.update(PALAVRAS_META_CATEGORIA)
+    palavras.update(PALAVRAS_META_ORIGEM)
     palavras.update(PALAVRAS_DATA)
     return sorted(palavras)
 

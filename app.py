@@ -35,6 +35,12 @@ def index():
             if consulta["intencao"] == "contagem":
                 total = resultado[0][0]
                 resposta = f"No total, há {total} imagens cadastradas."
+            elif consulta["intencao"] == "listar_categorias":
+                valores = ", ".join(linha[0] for linha in resultado)
+                resposta = f"As categorias disponíveis são: {valores}."
+            elif consulta["intencao"] == "listar_origens":
+                valores = ", ".join(linha[0] for linha in resultado)
+                resposta = f"As origens disponíveis são: {valores}."
             else:
                 imagens = resultado
                 quantidade = len(imagens)

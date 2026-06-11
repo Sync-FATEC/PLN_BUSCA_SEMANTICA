@@ -33,11 +33,9 @@ MODELO_TRANSFORMERS = "paraphrase-multilingual-MiniLM-L12-v2"
 PESO_WORD2VEC = 0.5
 
 # Limiar para considerar que uma categoria/origem foi mencionada.
-LIMIAR_ENTIDADE = 0.60
-
-# Limiar para considerar que a pergunta é mesmo sobre imagens (evita
-# responder a perguntas fora do assunto).
-LIMIAR_DOMINIO = 0.60
+# Calibrado com medições: termos verdadeiros pontuam >= 0.79 e falsos
+# positivos <= 0.63 — 0.70 fica no meio do vão, com folga dos dois lados.
+LIMIAR_ENTIDADE = 0.70
 
 # --- Correção ortográfica ---
 # Similaridade mínima (0-100) para o RapidFuzz aceitar uma correção.

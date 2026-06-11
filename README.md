@@ -143,9 +143,15 @@ embeddings **pré-calculados** no início (`_CATEGORIAS_EMB`, `_ORIGENS_EMB`).
 - **`detectar_intencao()`**: olha se a pergunta tem palavras como "quantas",
   "total", "quantidade" (`PALAVRAS_CONTAGEM`). Se sim → `"contagem"`;
   senão → `"listagem"`.
-- **`eh_sobre_imagens()`**: mede se a pergunta tem a ver com o domínio
-  (palavras como "imagens", "fotos"...). Serve de "guarda" contra perguntas
-  fora do assunto (seção 4.6).
+- **`detectar_meta()`**: reconhece perguntas **sobre os metadados** em vez de
+  sobre as imagens — ex.: *"quais são as categorias disponíveis?"* →
+  `SELECT DISTINCT categoria`. Só vale quando nenhum valor específico foi
+  citado (assim *"imagens da categoria água"* não cai aqui por engano).
+- **`eh_sobre_imagens()`**: verifica se a pergunta contém alguma palavra do
+  domínio (imagens, fotos, mostrar...). A checagem é **exata por token** —
+  de propósito: por embedding, verbos genéricos ("fazer", "ver") se parecem
+  entre si e deixariam passar perguntas fora do assunto, como
+  *"como fazer bolo de chocolate"*. Serve de "guarda" (seção 4.6).
 
 ### 4.5. Detecção de data — `datas.py`
 
@@ -178,16 +184,17 @@ datas fixas no código. Exemplos:
 Antes de montar o SQL, o sistema decide se a pergunta é mesmo sobre imagens:
 
 ```python
-on_topic = tem_filtro_forte or intencao == "contagem" or eh_sobre_imagens(...)
+on_topic = bool(categoria or origem) or eh_sobre_imagens(tokens)
 ```
 
 - se detectou categoria ou origem → claramente é do domínio;
-- se é uma contagem ("quantas...") → ok;
-- senão, exige que a pergunta se pareça com o vocabulário do domínio.
+- senão, exige que a pergunta contenha alguma **palavra do domínio**
+  (imagens, fotos, mostrar...) — verificação exata por token.
 
 Se nada disso valer, retorna `None` e a interface responde *"Não entendi sua
-busca"*. É isso que faz *"qual a cotação do dólar hoje"* ser rejeitada,
-mesmo contendo "hoje".
+busca"*. É isso que rejeita *"qual a cotação do dólar hoje"* (mesmo contendo
+"hoje"), *"como fazer bolo de chocolate"* e *"quantas casas tem no brasil"*
+(mesmo contendo "quantas").
 
 ### 4.7. Montagem dinâmica do SQL — `sql_builder.py`
 
@@ -230,8 +237,10 @@ mas devolvendo a forma correta).
 ### 5.2. Limiares calibrados com medições
 
 Os limiares não foram chutados: medimos os scores reais de várias perguntas.
-Termos corretos batem em ~0.87–1.0; falsos positivos ficam em ≤0.55. O corte
-em **0.60** separa os dois com folga.
+Termos corretos pontuam **≥ 0.79** (ex.: "regiões secas"→solo exposto 0.79,
+"matas"→vegetação 1.0); falsos positivos ficam **≤ 0.63** (ex.: "casas"→
+vegetação 0.62). O corte em **0.70** fica no meio do vão, com folga dos dois
+lados.
 
 ### 5.3. Embeddings pré-calculados
 
@@ -317,6 +326,12 @@ Acesse: http://127.0.0.1:5000
 "vegetação por drone no dia 2 de maio", "solo exposto do ano passado"
 
 **Contagem:** "quantas imagens existem", "quantas fotos de satélite"
+
+**Sobre os metadados:** "quais são as categorias disponíveis?",
+"quais origens existem?", "quais os tipos de imagens?"
+
+**Fora do escopo (responde "não entendi"):** "como fazer bolo de chocolate",
+"qual a cotação do dólar hoje", "quantas casas tem no brasil"
 
 > **Atenção aos dados:** as imagens de exemplo são de **maio/2026**. Logo,
 > "imagens de hoje"/"esse mês" funcionam, mas devolvem vazio (não há imagem do

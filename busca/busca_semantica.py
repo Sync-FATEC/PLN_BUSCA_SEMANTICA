@@ -40,14 +40,28 @@ def identificar_consulta(entrada):
     condicao_data = datas.detectar_data(entrada)        # usa o texto original
     intencao = entidades.detectar_intencao(texto)
 
-    # A pergunta é mesmo sobre imagens? Se não detectamos nenhum filtro forte,
-    # não é uma contagem e nem parece do domínio, respondemos "não entendi".
-    tem_filtro_forte = bool(categoria or origem)
-    on_topic = (
-        tem_filtro_forte
-        or intencao == "contagem"
-        or entidades.eh_sobre_imagens(consulta_emb)
-    )
+    # Pergunta-meta: "quais são as categorias disponíveis?" pergunta SOBRE os
+    # metadados. Só vale se nenhum valor específico foi citado (senão
+    # "imagens da categoria água" cairia aqui por engano).
+    meta = entidades.detectar_meta(tokens)
+    if meta == "listar_categorias" and categoria is None:
+        return {
+            "sql": "SELECT DISTINCT categoria FROM metadata_table ORDER BY categoria",
+            "intencao": meta, "categoria": None, "origem": None,
+            "data": None, "texto_processado": texto,
+        }
+    if meta == "listar_origens" and origem is None:
+        return {
+            "sql": "SELECT DISTINCT origem FROM metadata_table ORDER BY origem",
+            "intencao": meta, "categoria": None, "origem": None,
+            "data": None, "texto_processado": texto,
+        }
+
+    # A pergunta é mesmo sobre imagens? Precisa ter detectado um filtro forte
+    # OU conter alguma palavra do domínio (imagens, fotos, mostrar...).
+    # Senão, respondemos "não entendi" — é o que barra perguntas fora do
+    # escopo como "como fazer bolo de chocolate".
+    on_topic = bool(categoria or origem) or entidades.eh_sobre_imagens(tokens)
     if not on_topic:
         return None
 
