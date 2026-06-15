@@ -147,6 +147,18 @@ embeddings **pré-calculados** no início (`_CATEGORIAS_EMB`, `_ORIGENS_EMB`).
   sobre as imagens — ex.: *"quais são as categorias disponíveis?"* →
   `SELECT DISTINCT categoria`. Só vale quando nenhum valor específico foi
   citado (assim *"imagens da categoria água"* não cai aqui por engano).
+- **`detectar_ranking()`**: reconhece perguntas **analíticas** — uma
+  **direção** (mais/menos) + uma **dimensão** (categoria/origem/mês/data).
+  Ex.: *"qual categoria tem mais imagens"*, *"em que mês tem menos fotos"*.
+  Gera um `GROUP BY ... COUNT(*) ... ORDER BY` (ver 4.7).
+- **`detectar_agrupamento()`**: *"quantas imagens de cada categoria"* →
+  contagem por grupo (`GROUP BY`), listando todos os valores e seus totais.
+- **`detectar_negacao()`**: detecta "não", "sem", "exceto" → inverte o filtro
+  (`!=` / `NOT IN`). Ex.: *"imagens que não são de drone"*.
+- **`detectar_categorias()` / `detectar_origens()`** devolvem **listas**: se
+  o usuário citar mais de um valor (*"água ou vegetação"*), vira `IN (...)`.
+- **`detectar_ordenacao_temporal()`**: *"a imagem mais antiga/recente"* →
+  `ORDER BY data_imagem` + `LIMIT 1`.
 - **`eh_sobre_imagens()`**: verifica se a pergunta contém alguma palavra do
   domínio (imagens, fotos, mostrar...). A checagem é **exata por token** —
   de propósito: por embedding, verbos genéricos ("fazer", "ver") se parecem
@@ -162,7 +174,10 @@ tenta, nesta ordem:
    "mês passado", "esse ano", "ano passado", "essa/semana passada".
 2. **Data completa** (`_data_completa`): "05/05/2026", "05/05",
    "7 de maio de 2026", "7 de maio" (ano opcional).
-3. **Componentes soltos** (`_componentes`): combina o que achar — "dia 10"
+3. **Intervalos e comparadores** (`_intervalos`): "entre 1 e 10 de maio"
+   (`BETWEEN`), "antes de 10 de maio" (`<`), "depois de 5 de maio" (`>`),
+   "a partir de ..." (`>=`), "até ..." (`<=`).
+4. **Componentes soltos** (`_componentes`): combina o que achar — "dia 10"
    (só o dia), "mês 6" ou "maio" (só o mês), "2026" (só o ano).
 
 O retorno é a **condição SQL** sobre a coluna `data_imagem`. As condições
@@ -210,6 +225,14 @@ Exemplo: *"fotos de drone no mês 6"* →
 SELECT * FROM metadata_table
 WHERE origem = 'drone' AND (EXTRACT(MONTH FROM data_imagem) = 6)
 ```
+
+Para perguntas **analíticas**, `montar_ranking()` gera uma agregação. Exemplo:
+*"qual categoria tem mais imagens"* →
+```sql
+SELECT categoria AS valor, COUNT(*) AS total
+FROM metadata_table GROUP BY categoria ORDER BY total DESC, valor
+```
+O `app.py` pega o extremo (mais/menos) e trata empates na resposta.
 
 ### 4.8. Execução e exibição — `database.py` + `app.py`
 
@@ -330,6 +353,21 @@ Acesse: http://127.0.0.1:5000
 **Sobre os metadados:** "quais são as categorias disponíveis?",
 "quais origens existem?", "quais os tipos de imagens?"
 
+**Analíticas (ranking):** "qual categoria tem mais imagens",
+"qual origem é mais usada", "em que mês tem mais fotos",
+"qual é a data com menos imagens"
+
+**Contagem por grupo:** "quantas imagens de cada categoria",
+"imagens por origem"
+
+**Negação e "ou":** "imagens que não são de drone",
+"imagens de água ou vegetação"
+
+**Intervalos de data:** "imagens entre 1 e 10 de maio",
+"imagens antes de 10 de maio", "imagens depois de 5 de maio"
+
+**Mais antiga/recente:** "qual a imagem mais antiga", "a imagem mais recente"
+
 **Fora do escopo (responde "não entendi"):** "como fazer bolo de chocolate",
 "qual a cotação do dólar hoje", "quantas casas tem no brasil"
 
@@ -345,3 +383,7 @@ Acesse: http://127.0.0.1:5000
   diferentes podem não ser detectados (basta adicioná-los lá).
 - O SQL usa interpolação de strings (ver 5.5).
 - Datas por extenso assumem o ano atual quando o ano não é informado.
+- A negação inverte **todos** os filtros detectados; uma frase que misture
+  positivo e negativo ("vegetação que não é de drone") não é tratada.
+- Não há suporte a: busca por id ("imagem 3"), limite N ("as 3 primeiras"),
+  porcentagem nem ordenação livre — fora do escopo atual.

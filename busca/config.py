@@ -39,4 +39,6 @@ LIMIAR_ENTIDADE = 0.70
 
 # --- Correção ortográfica ---
 # Similaridade mínima (0-100) para o RapidFuzz aceitar uma correção.
-LIMIAR_CORRECAO = 80
+# Calibrado com medições: typos reais pontuam >= 85.7; falsos positivos como
+# "alguma"->"agua" ficam em 80. O corte em 85 separa os dois.
+LIMIAR_CORRECAO = 85

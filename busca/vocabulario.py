@@ -13,7 +13,6 @@ Para reconhecer uma nova forma de falar (ex.: "riacho" para água), basta
 acrescentar a palavra na lista correspondente aqui.
 """
 
-# Categoria -> formas de se referir a ela
 CATEGORIAS = {
     "vegetação": ["vegetação", "floresta", "florestas", "mata", "matas",
                    "árvores", "plantas", "verde", "matagal"],
@@ -45,10 +44,27 @@ PALAVRAS_DOMINIO = [
 PALAVRAS_META_CATEGORIA = ["categorias", "categoria", "tipos", "tipo", "classes"]
 PALAVRAS_META_ORIGEM = ["origens", "origem", "fontes"]
 
+# Palavras de perguntas analíticas (ranking): "qual tem MAIS/MENOS imagens"
+PALAVRAS_RANKING = ["mais", "menos", "maior", "menor", "maiores", "menores",
+                    "data", "datas", "meses"]
+
+# Negação: "imagens que NÃO são de drone", "SEM vegetação"
+PALAVRAS_NEGACAO = ["nao", "sem", "exceto", "fora"]
+
+# Ordenação temporal: "imagem mais ANTIGA / mais RECENTE"
+PALAVRAS_TEMPORAL_ANTIGA = ["antiga", "antigo", "antigas", "antigos",
+                             "velha", "velho", "primeira", "primeiro"]
+PALAVRAS_TEMPORAL_RECENTE = ["recente", "recentes", "nova", "novo", "novas",
+                              "novos", "ultima", "ultimo", "ultimas", "ultimos"]
+
+# Agrupamento: "quantas imagens de CADA categoria", "imagens POR origem"
+PALAVRAS_AGRUPAR = ["cada", "por"]
+
 # Palavras ligadas a datas (para a correção ortográfica não as estragar)
 PALAVRAS_DATA = [
     "hoje", "ontem", "dia", "semana", "mês", "ano", "esse", "este", "essa",
     "esta", "deste", "desta", "passado", "passada",
+    "entre", "antes", "depois", "apos", "até", "partir",
     "janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
     "agosto", "setembro", "outubro", "novembro", "dezembro",
 ]
@@ -64,6 +80,11 @@ def _coletar_vocabulario():
     palavras.update(PALAVRAS_DOMINIO)
     palavras.update(PALAVRAS_META_CATEGORIA)
     palavras.update(PALAVRAS_META_ORIGEM)
+    palavras.update(PALAVRAS_RANKING)
+    palavras.update(PALAVRAS_NEGACAO)
+    palavras.update(PALAVRAS_TEMPORAL_ANTIGA)
+    palavras.update(PALAVRAS_TEMPORAL_RECENTE)
+    palavras.update(PALAVRAS_AGRUPAR)
     palavras.update(PALAVRAS_DATA)
     return sorted(palavras)
 
