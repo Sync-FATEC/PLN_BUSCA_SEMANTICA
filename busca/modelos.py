@@ -1,12 +1,3 @@
-"""
-Carrega os modelos de linguagem (word2vec + transformer) e fornece a
-similaridade COMBINADA entre conjuntos de textos.
-
-É aqui que as duas tecnologias do enunciado vivem:
-  - word2vec   -> spaCy (vetores de palavras pré-treinados em português)
-  - transformer-> sentence-transformers (LLM de sentenças)
-"""
-
 import numpy as np
 import spacy
 from sentence_transformers import SentenceTransformer

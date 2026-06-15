@@ -1,20 +1,3 @@
-"""
-Orquestrador do pipeline de busca semântica.
-
-Junta todas as etapas e é o único ponto que o app precisa chamar:
-
-    pergunta
-       -> preprocessar              (normalização + correção ortográfica)
-       -> embeddings das palavras   (word2vec + transformer)
-       -> detectar categoria/origem (similaridade combinada)
-       -> detectar data             (regras: relativa/extenso/numérica/intervalo)
-       -> detectar intenção         (contar vs listar)
-       -> montar o SQL dinamicamente
-
-Não há mais "consultas-modelo" com SQL fixo: a query é construída a partir
-das entidades encontradas, então qualquer combinação é aceita.
-"""
-
 from . import entidades, datas, sql_builder, modelos
 from .preprocessamento import preprocessar
 

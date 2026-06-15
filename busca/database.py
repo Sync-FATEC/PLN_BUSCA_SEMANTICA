@@ -1,11 +1,3 @@
-"""
-Acesso ao banco de dados PostgreSQL.
-
-Isola toda a comunicação com o banco. O resto do sistema só chama
-`executar_consulta(sql)` e recebe as linhas de volta, sem se preocupar
-com abrir/fechar conexão.
-"""
-
 import psycopg2
 from .config import DB_CONFIG
 

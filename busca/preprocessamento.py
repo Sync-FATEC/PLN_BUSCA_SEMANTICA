@@ -1,17 +1,3 @@
-"""
-Pipeline de pré-processamento de texto (PLN).
-
-Aplica, na ordem:
-  1. Normalização         -> minúsculas e remoção de pontuação (MANTÉM acentos)
-  2. Correção ortográfica  -> conserta erros e restaura acentos (RapidFuzz)
-
-Por que manter os acentos? Porque os vetores do word2vec (spaCy) são
-indexados nas palavras acentuadas ("água", "vegetação"). Sem acento, o
-word2vec não acharia o vetor. A correção ortográfica compara as palavras
-SEM acento (tolerante a digitação), mas devolve sempre a forma correta,
-acentuada — pronta para o word2vec.
-"""
-
 import re
 import unidecode
 from rapidfuzz import process, fuzz

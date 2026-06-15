@@ -1,17 +1,3 @@
-"""
-Extração de entidades da pergunta.
-
-A partir do texto já pré-processado, descobre:
-  - categoria (vegetação / água / solo exposto)  -> word2vec + transformer
-  - origem    (satélite / drone)                  -> word2vec + transformer
-  - intenção  (contagem ou listagem)              -> palavras-chave
-
-A ideia: para cada valor possível (ex.: "drone") temos uma lista de
-sinônimos. Comparamos as palavras da pergunta com esses sinônimos usando a
-similaridade combinada. Se alguma ficar acima do limiar, o valor foi
-mencionado.
-"""
-
 import unidecode
 
 from .vocabulario import (

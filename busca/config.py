@@ -1,11 +1,3 @@
-"""
-Configurações centrais do sistema.
-
-Mantém num só lugar tudo que pode ser ajustado: credenciais do banco,
-nomes dos modelos e os limiares de similaridade. Assim nenhum outro
-arquivo precisa lidar com variáveis de ambiente ou "números mágicos".
-"""
-
 import os
 from dotenv import load_dotenv
 

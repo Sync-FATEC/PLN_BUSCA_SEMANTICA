@@ -1,20 +1,3 @@
-"""
-Detecção de expressões de data na pergunta.
-
-Devolve a CONDIÇÃO SQL sobre a coluna `data_imagem` (ou None se não houver
-data). Procura, nesta ordem:
-
-  1. Relativas ao agora:  hoje, ontem, esse mês, mês passado, esse ano, ...
-  2. Data completa:       "05/05/2026", "05/05", "7 de maio de 2026", "7 de maio"
-  3. Componentes soltos:  "dia 10", "mês 6", "maio", "2026" (combina o que achar)
-
-A regra 3 é o que deixa o sistema genérico: o usuário pode dar só o dia, só
-o mês (por número ou nome), só o ano, ou qualquer combinação deles.
-
-As condições usam CURRENT_DATE/make_date do PostgreSQL, então o "agora" é
-sempre o dia em que a consulta roda.
-"""
-
 import re
 import unidecode
 

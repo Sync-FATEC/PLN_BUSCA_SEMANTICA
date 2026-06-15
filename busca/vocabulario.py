@@ -1,18 +1,3 @@
-"""
-Vocabulário do domínio: tudo que o sistema "conhece".
-
-Usado em dois lugares:
-  - correção ortográfica (todas as palavras conhecidas)
-  - detecção de entidades (sinônimos de cada categoria/origem)
-
-IMPORTANTE: os termos ficam COM acento, porque os vetores do word2vec
-(spaCy em português) são indexados nas palavras acentuadas. A correção
-ortográfica é tolerante a acento, então o usuário pode digitar sem.
-
-Para reconhecer uma nova forma de falar (ex.: "riacho" para água), basta
-acrescentar a palavra na lista correspondente aqui.
-"""
-
 CATEGORIAS = {
     "vegetação": ["vegetação", "floresta", "florestas", "mata", "matas",
                    "árvores", "plantas", "verde", "matagal"],
