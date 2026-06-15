@@ -27,7 +27,7 @@ _TAMANHO_MINIMO = 4
 def normalizar(texto):
     """minúsculas e remoção de pontuação, preservando letras acentuadas."""
     texto = texto.lower()
-    texto = re.sub(r"[^\w\s]", " ", texto)   # \w mantém acentos e números
+    texto = re.sub(r"[^\w\s]", " ", texto)
     texto = re.sub(r"\s+", " ", texto)
     return texto.strip()
 
@@ -50,9 +50,9 @@ def corrigir_ortografia(texto):
             processor=unidecode.unidecode,
         )
         if melhor and melhor[1] >= LIMIAR_CORRECAO:
-            corrigidos.append(melhor[0])   # ex.: "vegetasao" -> "vegetação"
+            corrigidos.append(melhor[0])
         else:
-            corrigidos.append(token)       # mantém se nada for parecido
+            corrigidos.append(token)
 
     return " ".join(corrigidos)
 

@@ -57,7 +57,7 @@ def index():
     resposta = None
     imagens = []
     pergunta = None
-    detalhe = None            # informações da busca (para exibir na tela)
+    detalhe = None
 
     if request.method == "POST":
         pergunta = request.form["pergunta"]
@@ -103,5 +103,4 @@ def index():
 
 
 if __name__ == "__main__":
-    # use_reloader=False evita que o Flask carregue os modelos duas vezes.
     app.run(debug=True, use_reloader=False)
